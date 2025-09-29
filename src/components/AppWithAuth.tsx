@@ -66,4 +66,3 @@ export const AppWithAuth: React.FC = () => {
 
   return <UserDashboard user={user} onSignOut={handleSignOut} />;
 };
-

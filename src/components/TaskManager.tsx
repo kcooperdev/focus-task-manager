@@ -125,4 +125,3 @@ export const TaskManager: React.FC<TaskManagerProps> = ({ user }) => {
     </div>
   );
 };
-

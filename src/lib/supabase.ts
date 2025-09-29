@@ -24,6 +24,7 @@ if (supabaseUrl && supabaseAnonKey) {
         data: { subscription: { unsubscribe: () => void 0 } },
       }),
       signInWithPassword: async () => ({ data: null, error: notConfigured() }),
+      signInWithOtp: async () => ({ data: null, error: notConfigured() }),
       signUp: async () => ({ data: null, error: notConfigured() }),
       signOut: async () => ({ error: null }),
     },

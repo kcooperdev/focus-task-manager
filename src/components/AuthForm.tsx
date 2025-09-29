@@ -1,14 +1,16 @@
 import React, { useState } from "react";
 import { supabase } from "../lib/supabase";
 import { Link, useNavigate } from "react-router-dom";
+import { User } from "@supabase/supabase-js";
 
 interface AuthFormProps {
-  onAuthSuccess: (user: any) => void;
+  onAuthSuccess: (user: User) => void;
 }
 
 export const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess }) => {
   const navigate = useNavigate();
   const [isSignUp, setIsSignUp] = useState(true);
+  const [isMagicLink, setIsMagicLink] = useState(false);
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -17,10 +19,36 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess }) => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
+  const handleMagicLink = async () => {
+    setLoading(true);
+    setMessage("");
+
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email: formData.email,
+      });
+
+      if (error) {
+        setMessage(`Error: ${error.message}`);
+      } else {
+        setMessage("Check your email for the magic link!");
+      }
+    } catch (error) {
+      setMessage(`Error: ${error}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setMessage("");
+
+    if (isMagicLink) {
+      handleMagicLink();
+      return;
+    }
 
     try {
       // Check if Supabase is properly configured
@@ -115,11 +143,17 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess }) => {
         {/* Title */}
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-gray-900 mb-2">
-            {isSignUp ? "Create your account" : "Welcome back"}
+            {isSignUp
+              ? "Create your account"
+              : isMagicLink
+              ? "Sign in with Magic Link"
+              : "Welcome back"}
           </h1>
           <p className="text-gray-600">
             {isSignUp
               ? "Start managing tasks that work with your brain"
+              : isMagicLink
+              ? "Enter your email to receive a magic link"
               : "Sign in to continue with your tasks"}
           </p>
         </div>
@@ -127,7 +161,10 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess }) => {
         {/* Tabs */}
         <div className="flex mb-6">
           <button
-            onClick={() => setIsSignUp(true)}
+            onClick={() => {
+              setIsSignUp(true);
+              setIsMagicLink(false);
+            }}
             className={`flex-1 py-2 px-4 text-center font-medium ${
               isSignUp
                 ? "text-indigo-600 border-b-2 border-indigo-600"
@@ -137,14 +174,30 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess }) => {
             Sign Up
           </button>
           <button
-            onClick={() => setIsSignUp(false)}
+            onClick={() => {
+              setIsSignUp(false);
+              setIsMagicLink(false);
+            }}
             className={`flex-1 py-2 px-4 text-center font-medium ${
-              !isSignUp
+              !isSignUp && !isMagicLink
                 ? "text-indigo-600 border-b-2 border-indigo-600"
                 : "text-gray-500 hover:text-gray-700"
             }`}
           >
             Sign In
+          </button>
+          <button
+            onClick={() => {
+              setIsSignUp(false);
+              setIsMagicLink(true);
+            }}
+            className={`flex-1 py-2 px-4 text-center font-medium ${
+              isMagicLink
+                ? "text-indigo-600 border-b-2 border-indigo-600"
+                : "text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            Magic Link
           </button>
         </div>
 
@@ -218,39 +271,41 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess }) => {
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Password
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg
-                  className="h-4 w-4 text-gray-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                  />
-                </svg>
+          {!isMagicLink && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Password
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg
+                    className="h-4 w-4 text-gray-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                    />
+                  </svg>
+                </div>
+                <input
+                  type="password"
+                  value={formData.password}
+                  onChange={(e) =>
+                    setFormData({ ...formData, password: e.target.value })
+                  }
+                  className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  placeholder="Enter your password"
+                  required={!isMagicLink && isSignUp}
+                  style={{ display: "block" }}
+                />
               </div>
-              <input
-                type="password"
-                value={formData.password}
-                onChange={(e) =>
-                  setFormData({ ...formData, password: e.target.value })
-                }
-                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                placeholder="Enter your password"
-                required
-                style={{ display: "block" }}
-              />
             </div>
-          </div>
+          )}
 
           {isSignUp && (
             <div className="flex items-center">
@@ -281,7 +336,13 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess }) => {
             disabled={loading}
             className="w-full bg-indigo-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? "Loading..." : isSignUp ? "Create Account" : "Sign In"}
+            {loading
+              ? "Loading..."
+              : isSignUp
+              ? "Create Account"
+              : isMagicLink
+              ? "Send Magic Link"
+              : "Sign In"}
           </button>
         </form>
 

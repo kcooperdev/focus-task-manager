@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import { App } from "./App";
 import { AuthForm } from "./components/AuthForm";
 import { Dashboard } from "./components/Dashboard";

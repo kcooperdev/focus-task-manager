@@ -147,4 +147,3 @@ export const Auth: React.FC<AuthProps> = ({ onAuthSuccess }) => {
     </div>
   );
 };
-

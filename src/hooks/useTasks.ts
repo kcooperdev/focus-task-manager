@@ -108,4 +108,3 @@ export const useTasks = (user: User | null) => {
     deleteTask: removeTask,
   };
 };
-
