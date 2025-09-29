@@ -54,7 +54,11 @@ export const HeroSection = () => {
     } else if (countdown === 0) {
       // Trigger confetti
       if (confettiInstance.current) {
-        confettiInstance.current();
+        try {
+          confettiInstance.current.render();
+        } catch (error) {
+          console.error("Confetti render error:", error);
+        }
       }
       setCountdown(null);
     }
@@ -64,14 +68,15 @@ export const HeroSection = () => {
   useEffect(() => {
     const initializeConfetti = () => {
       if (confettiRef.current && !confettiInstance.current) {
-        const confetti = new Confetti({
-          target: confettiRef.current,
-          count: 75,
-          size: 1,
-          power: 25,
-          fade: false,
-        });
-        confettiInstance.current = confetti;
+        try {
+          confettiInstance.current = new Confetti(confettiRef.current);
+          confettiInstance.current.setCount(75);
+          confettiInstance.current.setSize(1);
+          confettiInstance.current.setPower(25);
+          confettiInstance.current.setFade(false);
+        } catch (error) {
+          console.error("Confetti initialization error:", error);
+        }
       }
     };
 
@@ -81,7 +86,11 @@ export const HeroSection = () => {
     return () => {
       clearTimeout(timer);
       if (confettiInstance.current) {
-        confettiInstance.current.clear();
+        try {
+          confettiInstance.current.destroyTarget(true);
+        } catch (error) {
+          console.error("Confetti cleanup error:", error);
+        }
         confettiInstance.current = null;
       }
     };
@@ -122,7 +131,11 @@ export const HeroSection = () => {
               if (newCountdown[id] === 0) {
                 // Trigger confetti when task completes
                 if (confettiInstance.current) {
-                  confettiInstance.current();
+                  try {
+                    confettiInstance.current.render();
+                  } catch (error) {
+                    console.error("Confetti render error:", error);
+                  }
                 }
 
                 // Trigger fade effect when timer completes for this specific task
