@@ -1,0 +1,186 @@
+/* Light Theme - Warm and Inviting */
+[data-theme="light"] {
+  --bg-primary: #fefefe;
+  --bg-secondary: #f8fafc;
+  --bg-tertiary: #f1f5f9;
+  --bg-card: #ffffff;
+  --bg-modal: #ffffff;
+  --bg-board: #f8fafc;
+  
+  --text-primary: #1e293b;
+  --text-secondary: #475569;
+  --text-tertiary: #64748b;
+  --text-muted: #94a3b8;
+  
+  --border-primary: #e2e8f0;
+  --border-secondary: #cbd5e1;
+  --border-focus: #8b5cf6;
+  
+  --accent-primary: #8b5cf6;
+  --accent-secondary: #a855f7;
+  --accent-tertiary: #c084fc;
+  
+  --success: #10b981;
+  --warning: #f59e0b;
+  --error: #ef4444;
+  --info: #3b82f6;
+  
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  
+  --gradient-primary: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%);
+  --gradient-secondary: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
+  --gradient-bg: radial-gradient(1200px 500px at 80% -10%, rgba(139, 92, 246, 0.08), transparent 60%), 
+                 radial-gradient(800px 400px at 20% -30%, rgba(236, 72, 153, 0.06), transparent 60%);
+}
+
+/* Dark Theme - Cool and Sophisticated */
+[data-theme="dark"] {
+  --bg-primary: #0a0a0a;
+  --bg-secondary: #111111;
+  --bg-tertiary: #1a1a1a;
+  --bg-card: #1e1e1e;
+  --bg-modal: #1e1e1e;
+  --bg-board: #111111;
+  
+  --text-primary: #f5f5f5;
+  --text-secondary: #d1d5db;
+  --text-tertiary: #9ca3af;
+  --text-muted: #6b7280;
+  
+  --border-primary: #374151;
+  --border-secondary: #4b5563;
+  --border-focus: #8b5cf6;
+  
+  --accent-primary: #8b5cf6;
+  --accent-secondary: #a855f7;
+  --accent-tertiary: #c084fc;
+  
+  --success: #10b981;
+  --warning: #f59e0b;
+  --error: #ef4444;
+  --info: #3b82f6;
+  
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+  
+  --gradient-primary: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%);
+  --gradient-secondary: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
+  --gradient-bg: radial-gradient(1200px 500px at 80% -10%, rgba(139, 92, 246, 0.18), transparent 60%), 
+                 radial-gradient(800px 400px at 20% -30%, rgba(236, 72, 153, 0.12), transparent 60%);
+}
+
+/* Base styles */
+* {
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+/* Theme-specific component styles */
+.theme-card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-primary);
+  box-shadow: var(--shadow-sm);
+}
+
+.theme-modal {
+  background-color: var(--bg-modal);
+  border: 1px solid var(--border-primary);
+  box-shadow: var(--shadow-lg);
+}
+
+.theme-button-primary {
+  background: var(--gradient-primary);
+  color: white;
+  border: none;
+  box-shadow: var(--shadow-sm);
+}
+
+.theme-button-secondary {
+  background-color: var(--bg-tertiary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-primary);
+}
+
+.theme-input {
+  background-color: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
+  color: var(--text-primary);
+}
+
+.theme-input:focus {
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+}
+
+.theme-progress {
+  background: var(--gradient-primary);
+}
+
+.theme-toast {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-primary);
+  box-shadow: var(--shadow-lg);
+  color: var(--text-primary);
+}
+
+/* Dashboard specific theme classes */
+.theme-dashboard {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.theme-board {
+  background-color: var(--bg-board);
+  border: 1px solid var(--border-primary);
+}
+
+.theme-task-card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-primary);
+  color: var(--text-primary);
+}
+
+.theme-task-card:hover {
+  border-color: var(--border-secondary);
+}
+
+.theme-nav {
+  background-color: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-primary);
+}
+
+.theme-banner {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-primary);
+}
+
+.theme-column {
+  background-color: var(--bg-board);
+  border: 1px solid var(--border-primary);
+}
+
+.theme-column-header {
+  background-color: var(--bg-tertiary);
+  border-bottom: 1px solid var(--border-primary);
+  color: var(--text-secondary);
+}
+
+.theme-timer {
+  color: var(--info);
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+}
+
+.theme-xp {
+  color: var(--warning);
+}
+
+.theme-completed {
+  color: var(--success);
+}
