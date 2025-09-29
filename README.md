@@ -41,3 +41,4 @@ npm run build
 - `.gitignore` prevents committing `.env` files
 - Only `VITE_`-prefixed env vars are exposed to the client
 # focus-task-manager
+# focus-task-manager
