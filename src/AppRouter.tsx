@@ -90,7 +90,7 @@ export function AppRouter() {
   }
 
   return (
-    <BrowserRouter>
+    
       <ErrorBoundary>
         <Routes>
         <Route path="/" element={<App />} />
@@ -132,6 +132,6 @@ export function AppRouter() {
         />
         </Routes>
       </ErrorBoundary>
-    </BrowserRouter>
+    
   );
 }
