@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "../lib/supabase";
 import { Link, useNavigate } from "react-router-dom";
+import { useSubscription } from "../contexts/SubscriptionContext";
+import { StripeService } from "../services/stripeService";
 import {
   Plus,
   Trophy,
@@ -61,6 +63,7 @@ interface ProjectListProps {
 
 export const ProjectList: React.FC<ProjectListProps> = ({ user }) => {
   const navigate = useNavigate();
+  const { isPremium, isTrial } = useSubscription();
   const [projects, setProjects] = useState<Project[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -537,6 +540,16 @@ export const ProjectList: React.FC<ProjectListProps> = ({ user }) => {
                 {profile?.full_name || user.email}
               </span>
             </div>
+            {(isPremium || isTrial) && (
+              <button
+                onClick={() =>
+                  StripeService.createCustomerPortalSession(user.id)
+                }
+                className="px-3 py-1.5 rounded-md bg-indigo-500/10 hover:bg-indigo-500/15 ring-1 ring-inset ring-indigo-500/30 text-indigo-300 hover:text-indigo-200 transition-colors text-sm"
+              >
+                Manage Subscription
+              </button>
+            )}
             <button
               onClick={handleSignOut}
               className="px-3 py-1.5 rounded-md bg-red-500/10 hover:bg-red-500/15 ring-1 ring-inset ring-red-500/30 text-red-300 hover:text-red-200 transition-colors text-sm"

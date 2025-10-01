@@ -2,6 +2,12 @@ import { loadStripe } from "@stripe/stripe-js";
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
+// Stripe Price IDs - Replace these with your actual Stripe price IDs
+export const STRIPE_PRICE_IDS = {
+  PREMIUM_MONTHLY: "price_premium_monthly", // Replace with your actual price ID
+  PRO_MONTHLY: "price_pro_monthly", // Replace with your actual price ID
+} as const;
+
 export interface SubscriptionStatus {
   isActive: boolean;
   isTrial: boolean;
@@ -20,8 +26,8 @@ export class StripeService {
         body: JSON.stringify({
           priceId,
           userId: userId || "demo-user",
-          successUrl: `${window.location.origin}/subscription?success=true`,
-          cancelUrl: `${window.location.origin}/subscription?canceled=true`,
+          successUrl: `${window.location.origin}/projects?success=true`,
+          cancelUrl: `${window.location.origin}/?canceled=true`,
         }),
       });
 

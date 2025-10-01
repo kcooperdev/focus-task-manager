@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { CheckIcon } from "lucide-react";
 import { Link } from "react-router-dom";
+import { StripeService, STRIPE_PRICE_IDS } from "../services/stripeService";
 
 interface SubscriptionPlan {
   id: string;
@@ -59,6 +60,31 @@ export const PricingSection = () => {
     if (plan.price === 0) return "Free";
     const price = billingPeriod === "yearly" ? plan.price * 10 : plan.price; // 2 months free for yearly
     return `$${price}/${billingPeriod === "yearly" ? "year" : "month"}`;
+  };
+
+  const handleSubscribe = async (plan: SubscriptionPlan) => {
+    if (plan.id === "basic") {
+      // Redirect to auth for free plan
+      window.location.href = "/auth";
+      return;
+    }
+
+    try {
+      // Get the appropriate price ID based on plan and billing period
+      let priceId: string;
+      if (plan.id === "premium") {
+        priceId = STRIPE_PRICE_IDS.PREMIUM_MONTHLY; // You'll need to create yearly versions too
+      } else if (plan.id === "pro") {
+        priceId = STRIPE_PRICE_IDS.PRO_MONTHLY; // You'll need to create yearly versions too
+      } else {
+        throw new Error("Invalid plan selected");
+      }
+
+      await StripeService.createCheckoutSession(priceId);
+    } catch (error) {
+      console.error("Error starting checkout:", error);
+      alert("Error starting checkout. Please try again.");
+    }
   };
 
   return (
@@ -138,8 +164,8 @@ export const PricingSection = () => {
               </div>
 
               <div className="flex justify-center">
-                <Link
-                  to="/subscription"
+                <button
+                  onClick={() => handleSubscribe(plan)}
                   className={`inline-block py-3 px-8 rounded-lg font-semibold text-center transition-all duration-300 ${
                     plan.id === "basic"
                       ? "bg-indigo-700/50 text-indigo-200 hover:bg-indigo-600/50 border border-indigo-600/30"
@@ -161,7 +187,7 @@ export const PricingSection = () => {
                       <div className="absolute bottom-1 right-3 w-1 h-1 bg-white/90 rounded-full opacity-0 group-hover:opacity-100 group-hover:animate-ping delay-300"></div>
                     </>
                   )}
-                </Link>
+                </button>
               </div>
             </div>
           ))}
