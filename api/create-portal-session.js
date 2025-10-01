@@ -1,25 +1,36 @@
-// This is a placeholder for your backend API
-// In production, you would implement this with your preferred backend framework
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 export default async function handler(req, res) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   const { userId, returnUrl } = req.body;
 
   try {
-    // In production, you would:
-    // 1. Initialize Stripe with your secret key
-    // 2. Create a customer portal session
-    // 3. Return the portal URL
+    // First, find or create a customer
+    const customers = await stripe.customers.list({
+      email: userId,
+      limit: 1,
+    });
 
-    // For demo purposes, we'll simulate a successful response
-    const url = `${returnUrl}/dashboard?portal=true`;
+    let customer;
+    if (customers.data.length > 0) {
+      customer = customers.data[0];
+    } else {
+      customer = await stripe.customers.create({
+        email: userId,
+      });
+    }
 
-    res.status(200).json({ url });
+    const session = await stripe.billingPortal.sessions.create({
+      customer: customer.id,
+      return_url: returnUrl,
+    });
+
+    res.status(200).json({ url: session.url });
   } catch (error) {
-    console.error("Error creating portal session:", error);
-    res.status(500).json({ error: "Internal server error" });
+    console.error('Error creating portal session:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 }

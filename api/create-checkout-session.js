@@ -1,26 +1,33 @@
-// This is a placeholder for your backend API
-// In production, you would implement this with your preferred backend framework
-// (Express.js, Next.js API routes, etc.)
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 export default async function handler(req, res) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   const { priceId, userId, successUrl, cancelUrl } = req.body;
 
   try {
-    // In production, you would:
-    // 1. Initialize Stripe with your secret key
-    // 2. Create a checkout session
-    // 3. Return the session ID
+    const session = await stripe.checkout.sessions.create({
+      mode: 'subscription',
+      payment_method_types: ['card'],
+      line_items: [
+        {
+          price: priceId,
+          quantity: 1,
+        },
+      ],
+      success_url: successUrl,
+      cancel_url: cancelUrl,
+      customer_email: userId, // You might want to get this from your database
+      metadata: {
+        userId: userId,
+      },
+    });
 
-    // For demo purposes, we'll simulate a successful response
-    const sessionId = `cs_test_${Date.now()}`;
-
-    res.status(200).json({ sessionId });
+    res.status(200).json({ sessionId: session.id });
   } catch (error) {
-    console.error("Error creating checkout session:", error);
-    res.status(500).json({ error: "Internal server error" });
+    console.error('Error creating checkout session:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 }

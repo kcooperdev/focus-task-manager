@@ -1,125 +1,179 @@
-import React from "react";
-import { CheckIcon, XIcon } from "lucide-react";
+import React, { useState } from "react";
+import { CheckIcon } from "lucide-react";
 import { Link } from "react-router-dom";
-import { StripeService } from "../services/stripeService";
+
+interface SubscriptionPlan {
+  id: string;
+  name: string;
+  price: number;
+  description: string;
+  features: string[];
+  popular?: boolean;
+}
+
 export const PricingSection = () => {
+  const [billingPeriod, setBillingPeriod] = useState<"monthly" | "yearly">(
+    "monthly"
+  );
+
+  const plans: SubscriptionPlan[] = [
+    {
+      id: "basic",
+      name: "Basic",
+      price: 0,
+      description: "Perfect for getting started with basic task management",
+      features: [
+        "Unlimited tasks",
+        "Basic time tracking",
+        "Pause and resume functionality",
+      ],
+    },
+    {
+      id: "premium",
+      name: "Premium",
+      price: 15,
+      description: "Advanced features for serious productivity",
+      features: [
+        "Everything in Basic",
+        "Advanced analytics",
+        "Priority support",
+        "No ads",
+      ],
+      popular: true,
+    },
+    {
+      id: "pro",
+      name: "Pro",
+      price: 30,
+      description: "Maximum productivity with all features",
+      features: [
+        "Everything in Premium",
+        "Custom integrations",
+        "Team collaboration",
+        "API access",
+      ],
+    },
+  ];
+
+  const getPrice = (plan: SubscriptionPlan) => {
+    if (plan.price === 0) return "Free";
+    const price = billingPeriod === "yearly" ? plan.price * 10 : plan.price; // 2 months free for yearly
+    return `$${price}/${billingPeriod === "yearly" ? "year" : "month"}`;
+  };
+
   return (
-    <section className="bg-white py-20 w-full">
+    <section className="bg-indigo-900 text-white py-20 w-full">
       <div className="container mx-auto px-6 max-w-6xl">
         <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold text-indigo-900 mb-4">
+          <h2 className="text-2xl md:text-3xl font-bold mb-4">
             Simple, Transparent Pricing
           </h2>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+          <p className="text-lg text-indigo-200 max-w-2xl mx-auto">
             Choose the plan that works for your needs. No hidden fees, no
             complicated tiers.
           </p>
         </div>
-        <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-          {/* Free Plan */}
-          <div className="bg-indigo-50 rounded-2xl p-8 border border-indigo-100 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
-            <div className="absolute top-0 right-0 bg-indigo-200 text-indigo-800 px-6 py-1 rounded-bl-lg font-medium">
-              Free
-            </div>
-            <h3 className="text-2xl font-bold text-indigo-900 mb-2 mt-6">
-              Basic
-            </h3>
-            <div className="flex items-end gap-1 mb-6">
-              <span className="text-4xl font-bold text-indigo-800">$0</span>
-              <span className="text-gray-600 mb-1">/month</span>
-            </div>
-            <p className="text-gray-600 mb-8">
-              Perfect for getting started and exploring how our task management
-              works for you.
-            </p>
-            <ul className="space-y-3 mb-10">
-              <li className="flex items-center gap-3">
-                <CheckIcon className="h-5 w-5 text-green-500 flex-shrink-0" />
-                <span>Unlimited tasks</span>
-              </li>
-              <li className="flex items-center gap-3">
-                <CheckIcon className="h-5 w-5 text-green-500 flex-shrink-0" />
-                <span>Basic time tracking</span>
-              </li>
-              <li className="flex items-center gap-3">
-                <CheckIcon className="h-5 w-5 text-green-500 flex-shrink-0" />
-                <span>Pause and resume functionality</span>
-              </li>
-              <li className="flex items-center gap-3 text-gray-400">
-                <XIcon className="h-5 w-5 text-gray-400 flex-shrink-0" />
-                <span>Advanced analytics</span>
-              </li>
-              <li className="flex items-center gap-3 text-gray-400">
-                <XIcon className="h-5 w-5 text-gray-400 flex-shrink-0" />
-                <span>Focus pattern insights</span>
-              </li>
-              <li className="flex items-center gap-3 text-gray-400">
-                <XIcon className="h-5 w-5 text-gray-400 flex-shrink-0" />
-                <span>Priority support</span>
-              </li>
-            </ul>
-            <Link
-              to="/signup"
-              className="w-full bg-indigo-100 hover:bg-indigo-200 text-indigo-800 transition-colors px-6 py-3 rounded-xl font-bold inline-block text-center"
+
+        {/* Billing Period Toggle */}
+        <div className="flex justify-center mb-12">
+          <div className="bg-indigo-800/50 rounded-lg p-1 flex border border-indigo-600/30">
+            <button
+              onClick={() => setBillingPeriod("monthly")}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                billingPeriod === "monthly"
+                  ? "bg-yellow-300 text-indigo-800 shadow-sm"
+                  : "text-indigo-200 hover:text-white"
+              }`}
             >
-              Get Started Free
-            </Link>
-          </div>
-          {/* Premium Plan */}
-          <div className="bg-gradient-to-br from-indigo-600 to-purple-700 text-white rounded-2xl p-8 border border-indigo-500 shadow-lg hover:shadow-xl transition-shadow relative overflow-hidden">
-            <div className="absolute top-0 right-0 bg-yellow-300 text-indigo-800 px-6 py-1 rounded-bl-lg font-medium">
-              Recommended
-            </div>
-            <h3 className="text-2xl font-bold mb-2 mt-6">Premium</h3>
-            <div className="flex items-end gap-1 mb-6">
-              <span className="text-4xl font-bold">$15</span>
-              <span className="opacity-90 mb-1">/month</span>
-            </div>
-            <p className="opacity-90 mb-8">
-              Unlock the full potential of your productivity with advanced
-              features designed for your needs.
-            </p>
-            <ul className="space-y-3 mb-10">
-              <li className="flex items-center gap-3">
-                <CheckIcon className="h-5 w-5 text-yellow-300 flex-shrink-0" />
-                <span>Everything in Basic</span>
-              </li>
-              <li className="flex items-center gap-3">
-                <CheckIcon className="h-5 w-5 text-yellow-300 flex-shrink-0" />
-                <span>Advanced time tracking</span>
-              </li>
-              <li className="flex items-center gap-3">
-                <CheckIcon className="h-5 w-5 text-yellow-300 flex-shrink-0" />
-                <span>Detailed focus pattern insights</span>
-              </li>
-              <li className="flex items-center gap-3">
-                <CheckIcon className="h-5 w-5 text-yellow-300 flex-shrink-0" />
-                <span>Personalized productivity recommendations</span>
-              </li>
-              <li className="flex items-center gap-3">
-                <CheckIcon className="h-5 w-5 text-yellow-300 flex-shrink-0" />
-                <span>Priority support</span>
-              </li>
-              <li className="flex items-center gap-3">
-                <CheckIcon className="h-5 w-5 text-yellow-300 flex-shrink-0" />
-                <span>No ads or distractions</span>
-              </li>
-            </ul>
-            <Link
-              to="/payment"
-              className="w-full bg-yellow-300 hover:bg-yellow-400 text-indigo-800 transition-colors px-6 py-3 rounded-xl font-bold inline-block text-center"
+              Monthly
+            </button>
+            <button
+              onClick={() => setBillingPeriod("yearly")}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                billingPeriod === "yearly"
+                  ? "bg-yellow-300 text-indigo-800 shadow-sm"
+                  : "text-indigo-200 hover:text-white"
+              }`}
             >
-              Get Premium - $15/month
-            </Link>
+              Yearly
+              <span className="ml-1 text-xs bg-green-400 text-indigo-800 px-2 py-0.5 rounded-full">
+                Save 20%
+              </span>
+            </button>
           </div>
         </div>
-        <div className="mt-12 text-center">
-          <p className="text-gray-600">
-            Premium plan unlocks all advanced features. Cancel anytime.
+
+        {/* Plans Grid */}
+        <div className="grid md:grid-cols-3 gap-8 mb-12">
+          {plans.map((plan) => (
+            <div
+              key={plan.id}
+              className={`relative bg-indigo-800/50 rounded-2xl border p-8 ${
+                plan.popular
+                  ? "border-yellow-300 shadow-lg ring-2 ring-yellow-300 ring-opacity-50"
+                  : "border-indigo-600/30 hover:border-indigo-500/50"
+              }`}
+            >
+              {plan.popular && (
+                <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                  <span className="bg-yellow-300 text-indigo-800 text-xs font-medium px-3 py-1 rounded-full">
+                    Most Popular
+                  </span>
+                </div>
+              )}
+
+              <div className="text-center mb-6">
+                <h3 className="text-xl font-bold mb-2">{plan.name}</h3>
+                <div className="text-3xl font-bold mb-2">{getPrice(plan)}</div>
+                <p className="text-sm text-indigo-200">{plan.description}</p>
+              </div>
+
+              <div className="space-y-4 mb-8">
+                {plan.features.map((feature, index) => (
+                  <div key={index} className="flex items-center gap-3">
+                    <CheckIcon className="h-5 w-5 text-green-400 flex-shrink-0" />
+                    <span className="text-indigo-200">{feature}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex justify-center">
+                <Link
+                  to="/subscription"
+                  className={`inline-block py-3 px-8 rounded-lg font-semibold text-center transition-all duration-300 ${
+                    plan.id === "basic"
+                      ? "bg-indigo-700/50 text-indigo-200 hover:bg-indigo-600/50 border border-indigo-600/30"
+                      : "bg-yellow-300 hover:bg-yellow-400 text-indigo-800 hover:shadow-[0_0_15px_rgba(251,191,36,0.4)] hover:scale-105 relative overflow-hidden group"
+                  }`}
+                >
+                  {plan.id === "basic"
+                    ? "Get Started Free"
+                    : `Get ${plan.name}`}
+                  {plan.id !== "basic" && (
+                    <>
+                      {/* Shiny overlay effect */}
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-800 ease-out"></div>
+
+                      {/* Sparkle effects */}
+                      <div className="absolute top-1 left-3 w-1 h-1 bg-white/90 rounded-full opacity-0 group-hover:opacity-100 group-hover:animate-ping"></div>
+                      <div className="absolute top-2 right-4 w-1 h-1 bg-white/90 rounded-full opacity-0 group-hover:opacity-100 group-hover:animate-ping delay-100"></div>
+                      <div className="absolute bottom-2 left-5 w-1 h-1 bg-white/90 rounded-full opacity-0 group-hover:opacity-100 group-hover:animate-ping delay-200"></div>
+                      <div className="absolute bottom-1 right-3 w-1 h-1 bg-white/90 rounded-full opacity-0 group-hover:opacity-100 group-hover:animate-ping delay-300"></div>
+                    </>
+                  )}
+                </Link>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="text-center">
+          <p className="text-sm text-indigo-200 mb-4">
+            All plans include our core features. Cancel anytime.
           </p>
-          <div className="mt-6 inline-flex items-center gap-2 bg-indigo-100 text-indigo-800 px-4 py-2 rounded-full">
-            <CheckIcon className="h-4 w-4" />
-            <span className="text-sm font-medium">Cancel anytime</span>
+          <div className="inline-flex items-center gap-2 bg-yellow-300 text-indigo-800 px-3 py-1.5 rounded-full">
+            <CheckIcon className="h-3 w-3" />
+            <span className="text-xs font-medium">Cancel anytime</span>
           </div>
         </div>
       </div>
