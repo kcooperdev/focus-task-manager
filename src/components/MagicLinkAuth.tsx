@@ -9,18 +9,34 @@ export const MagicLinkAuth = () => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
+  const [authLoading, setAuthLoading] = useState(true);
 
   // Check if user is already authenticated (returning from magic link)
   useEffect(() => {
     const checkAuth = async () => {
       console.log("Checking auth state...");
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      console.log("Current session:", session);
-      if (session?.user) {
-        console.log("User already authenticated, redirecting to projects");
-        navigate("/projects");
+      try {
+        const {
+          data: { session },
+          error,
+        } = await supabase.auth.getSession();
+
+        if (error) {
+          console.error("Error getting session:", error);
+          setAuthLoading(false);
+          return;
+        }
+
+        console.log("Current session:", session);
+        if (session?.user) {
+          console.log("User already authenticated, redirecting to projects");
+          navigate("/projects");
+        } else {
+          setAuthLoading(false);
+        }
+      } catch (error) {
+        console.error("Error in checkAuth:", error);
+        setAuthLoading(false);
       }
     };
     checkAuth();
@@ -72,6 +88,17 @@ export const MagicLinkAuth = () => {
       setLoading(false);
     }
   };
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-indigo-600 to-purple-700 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+          <p className="text-white text-lg">Checking authentication...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-600 to-purple-700 flex items-center justify-center p-4">
