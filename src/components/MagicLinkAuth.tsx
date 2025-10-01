@@ -13,14 +13,30 @@ export const MagicLinkAuth = () => {
   // Check if user is already authenticated (returning from magic link)
   useEffect(() => {
     const checkAuth = async () => {
+      console.log("Checking auth state...");
       const {
         data: { session },
       } = await supabase.auth.getSession();
+      console.log("Current session:", session);
       if (session?.user) {
+        console.log("User already authenticated, redirecting to projects");
         navigate("/projects");
       }
     };
     checkAuth();
+
+    // Listen for auth state changes (when user returns from magic link)
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("Auth state change:", event, session);
+      if (event === "SIGNED_IN" && session?.user) {
+        console.log("User signed in via magic link, redirecting to projects");
+        navigate("/projects");
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, [navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -29,21 +45,27 @@ export const MagicLinkAuth = () => {
     setMessage("");
 
     try {
+      console.log("Sending magic link to:", email);
+      console.log("Redirect URL:", `${window.location.origin}/auth`);
+
       const { error } = await supabase.auth.signInWithOtp({
         email,
         options: {
-          emailRedirectTo: `${window.location.origin}/projects`,
+          emailRedirectTo: `${window.location.origin}/auth`,
         },
       });
 
       if (error) {
+        console.error("Magic link error:", error);
         setMessage(`Error: ${error.message}`);
         setIsSuccess(false);
       } else {
+        console.log("Magic link sent successfully");
         setMessage("Check your email for the magic link!");
         setIsSuccess(true);
       }
     } catch (error) {
+      console.error("Magic link catch error:", error);
       setMessage(`Error: ${error}`);
       setIsSuccess(false);
     } finally {
