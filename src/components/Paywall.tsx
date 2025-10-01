@@ -7,7 +7,7 @@ interface PaywallProps {
   isOpen: boolean;
   onClose: () => void;
   feature: string;
-  userId: string;
+  userId?: string;
 }
 
 export const Paywall: React.FC<PaywallProps> = ({

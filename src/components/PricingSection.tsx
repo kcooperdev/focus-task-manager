@@ -1,6 +1,7 @@
 import React from "react";
 import { CheckIcon, XIcon } from "lucide-react";
 import { Link } from "react-router-dom";
+import { StripeService } from "../services/stripeService";
 export const PricingSection = () => {
   return (
     <section className="bg-white py-20 w-full">
@@ -105,7 +106,7 @@ export const PricingSection = () => {
               </li>
             </ul>
             <Link
-              to="/auth"
+              to="/payment"
               className="w-full bg-yellow-300 hover:bg-yellow-400 text-indigo-800 transition-colors px-6 py-3 rounded-xl font-bold inline-block text-center"
             >
               Get Premium - $15/month

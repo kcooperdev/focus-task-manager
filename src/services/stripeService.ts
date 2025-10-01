@@ -10,20 +10,22 @@ export interface SubscriptionStatus {
 }
 
 export class StripeService {
-  static async createCheckoutSession(priceId: string, userId: string) {
+  static async createCheckoutSession(priceId: string, userId?: string) {
     try {
-      // For demo purposes, simulate a successful trial start
-      // In production, this would redirect to Stripe checkout
+      // For demo purposes, simulate Stripe checkout
+      // In production, this would create a real Stripe checkout session
 
       // Simulate API delay
       await new Promise((resolve) => setTimeout(resolve, 1500));
 
-      // For demo, we'll simulate starting a premium subscription by updating local storage
+      // For demo, simulate successful payment and activate premium
       const premiumData = {
         isActive: true,
         isTrial: false,
         planType: "premium",
-        userId: userId,
+        userId: userId || "demo-user",
+        stripeCustomerId: "cus_demo_" + Date.now(),
+        subscriptionId: "sub_demo_" + Date.now(),
       };
 
       localStorage.setItem("subscription_status", JSON.stringify(premiumData));
@@ -31,13 +33,13 @@ export class StripeService {
       // Show success message and refresh
       setTimeout(() => {
         alert(
-          "🎉 Premium activated! You now have full access to all premium features. The page will refresh to show your new features!"
+          "🎉 Payment successful! Premium activated. You now have full access to all premium features. The page will refresh to show your new features!"
         );
         window.location.reload();
       }, 100);
     } catch (error) {
       console.error("Error creating checkout session:", error);
-      alert("Error getting premium. Please try again.");
+      alert("Error processing payment. Please try again.");
     }
   }
 
