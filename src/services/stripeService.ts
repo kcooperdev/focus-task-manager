@@ -1,6 +1,8 @@
 import { loadStripe } from "@stripe/stripe-js";
 
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
+const stripePromise = loadStripe(
+  (import.meta as any).env.VITE_STRIPE_PUBLISHABLE_KEY
+);
 
 // Stripe Price IDs - Replace these with your actual Stripe price IDs
 export const STRIPE_PRICE_IDS = {
