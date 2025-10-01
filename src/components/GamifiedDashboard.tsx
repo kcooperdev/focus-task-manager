@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "../lib/supabase";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import {
+  Link,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from "react-router-dom";
 import {
   Zap,
   Plus,
@@ -42,6 +47,7 @@ interface DashboardProps {
 export const GamifiedDashboard: React.FC<DashboardProps> = ({ user }) => {
   const navigate = useNavigate();
   const { projectId } = useParams<{ projectId: string }>();
+  const [searchParams] = useSearchParams();
   const { isPremium, isTrial, trialDaysLeft } = useSubscription();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [project, setProject] = useState<any>(null);
@@ -95,6 +101,13 @@ export const GamifiedDashboard: React.FC<DashboardProps> = ({ user }) => {
       navigate("/projects");
     }
   }, [user, projectId, navigate]);
+
+  // Check for payment success
+  useEffect(() => {
+    if (searchParams.get("success") === "true") {
+      alert("🎉 Payment successful! Your premium subscription is now active.");
+    }
+  }, [searchParams]);
 
   // Cleanup timers on unmount
   useEffect(() => {

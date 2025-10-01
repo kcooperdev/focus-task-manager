@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "../lib/supabase";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useSubscription } from "../contexts/SubscriptionContext";
 import { StripeService } from "../services/stripeService";
 import {
@@ -63,6 +63,7 @@ interface ProjectListProps {
 
 export const ProjectList: React.FC<ProjectListProps> = ({ user }) => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { isPremium, isTrial } = useSubscription();
   const [projects, setProjects] = useState<Project[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -99,7 +100,12 @@ export const ProjectList: React.FC<ProjectListProps> = ({ user }) => {
     loadProjects();
     loadCategories();
     loadProfile();
-  }, []);
+
+    // Check for payment success
+    if (searchParams.get("success") === "true") {
+      alert("🎉 Payment successful! Your premium subscription is now active.");
+    }
+  }, [searchParams]);
 
   const loadProfile = async () => {
     try {
