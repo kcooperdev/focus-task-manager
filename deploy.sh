@@ -8,6 +8,10 @@ if ! command -v railway &> /dev/null; then
     npm install -g @railway/cli
 fi
 
+# Install Express dependency
+echo "📦 Installing Express..."
+npm install express
+
 # Deploy to Railway
 echo "📦 Deploying to Railway..."
 railway up
