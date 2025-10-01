@@ -8,9 +8,20 @@ if ! command -v railway &> /dev/null; then
     npm install -g @railway/cli
 fi
 
-# Install Express dependency
-echo "📦 Installing Express..."
-npm install express
+# Install dependencies
+echo "📦 Installing dependencies..."
+npm install
+
+# Build the app locally to test
+echo "🔨 Building app..."
+npm run build
+
+if [ $? -ne 0 ]; then
+    echo "❌ Build failed! Please fix build errors first."
+    exit 1
+fi
+
+echo "✅ Build successful!"
 
 # Deploy to Railway
 echo "📦 Deploying to Railway..."
