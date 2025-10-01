@@ -1,13 +1,27 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { supabase } from "../lib/supabase";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Mail, ArrowLeft } from "lucide-react";
 
 export const MagicLinkAuth = () => {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
+
+  // Check if user is already authenticated (returning from magic link)
+  useEffect(() => {
+    const checkAuth = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (session?.user) {
+        navigate("/projects");
+      }
+    };
+    checkAuth();
+  }, [navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -96,6 +110,19 @@ export const MagicLinkAuth = () => {
             }`}
           >
             {message}
+            {isSuccess && (
+              <div className="mt-4">
+                <p className="text-sm text-green-600 mb-2">
+                  If you don't see the email, check your spam folder.
+                </p>
+                <button
+                  onClick={() => navigate("/projects")}
+                  className="text-sm text-indigo-600 hover:text-indigo-800 underline"
+                >
+                  Already signed in? Go to dashboard →
+                </button>
+              </div>
+            )}
           </div>
         )}
 

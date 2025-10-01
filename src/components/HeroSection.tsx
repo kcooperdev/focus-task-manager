@@ -327,7 +327,7 @@ export const HeroSection = () => {
           <div className="md:w-1/2">
             <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 shadow-xl relative">
               <div className="absolute -top-3 -left-3 bg-yellow-300 text-indigo-800 font-bold px-4 py-1 rounded-lg text-sm">
-                Task Manager
+                tunlvzn
               </div>
               <div className="space-y-4">
                 {tasks.map((task) => (

@@ -16,7 +16,12 @@ import {
   X,
   RotateCcw,
   Info,
+  Crown,
+  Lock,
 } from "lucide-react";
+import { useSubscription } from "../contexts/SubscriptionContext";
+import { Paywall } from "./Paywall";
+import { StripeService } from "../services/stripeService";
 
 interface Task {
   id: string;
@@ -37,6 +42,7 @@ interface DashboardProps {
 export const GamifiedDashboard: React.FC<DashboardProps> = ({ user }) => {
   const navigate = useNavigate();
   const { projectId } = useParams<{ projectId: string }>();
+  const { isPremium, isTrial, trialDaysLeft } = useSubscription();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [project, setProject] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
@@ -48,6 +54,8 @@ export const GamifiedDashboard: React.FC<DashboardProps> = ({ user }) => {
   const [newTaskPoints, setNewTaskPoints] = useState(5);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
+  const [showPaywall, setShowPaywall] = useState(false);
+  const [paywallFeature, setPaywallFeature] = useState("");
   const [toastIcon, setToastIcon] = useState("zap");
   const [draggedTask, setDraggedTask] = useState<string | null>(null);
   const [showHowItWorks, setShowHowItWorks] = useState(false);
@@ -712,6 +720,16 @@ export const GamifiedDashboard: React.FC<DashboardProps> = ({ user }) => {
                 {profile?.full_name || user.email}
               </span>
             </div>
+            {(isPremium || isTrial) && (
+              <button
+                onClick={() =>
+                  StripeService.createCustomerPortalSession(user.id)
+                }
+                className="px-3 py-1.5 rounded-md bg-indigo-500/10 hover:bg-indigo-500/15 ring-1 ring-inset ring-indigo-500/30 text-indigo-300 hover:text-indigo-200 transition-colors text-sm"
+              >
+                Manage Subscription
+              </button>
+            )}
             <button
               onClick={handleSignOut}
               className="px-3 py-1.5 rounded-md bg-red-500/10 hover:bg-red-500/15 ring-1 ring-inset ring-red-500/30 text-red-300 hover:text-red-200 transition-colors text-sm"
@@ -785,6 +803,96 @@ export const GamifiedDashboard: React.FC<DashboardProps> = ({ user }) => {
             </div>
           </div>
         </div>
+
+        {/* Premium Analytics Section */}
+        {!isPremium && (
+          <div className="mt-6 mb-6">
+            <div className="rounded-xl bg-gradient-to-r from-amber-500/10 to-orange-500/10 ring-1 ring-amber-500/20 p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center">
+                    <Crown className="text-white" size={20} />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-amber-200">
+                      Unlock Premium Analytics
+                    </h3>
+                    <p className="text-sm text-amber-300/80">
+                      Get detailed insights into your productivity patterns
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    setPaywallFeature("Advanced Analytics");
+                    setShowPaywall(true);
+                  }}
+                  className="px-4 py-2 bg-gradient-to-r from-amber-400 to-orange-500 text-white font-semibold rounded-lg hover:from-amber-500 hover:to-orange-600 transition-all duration-200"
+                >
+                  Upgrade Now
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Premium Features Preview */}
+        {isPremium && (
+          <div className="mt-6 mb-6">
+            <div className="rounded-xl bg-gradient-to-r from-indigo-500/10 to-purple-500/10 ring-1 ring-indigo-500/20 p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <Crown className="text-indigo-400" size={20} />
+                <h3 className="text-lg font-semibold text-indigo-200">
+                  Premium Analytics
+                </h3>
+                {isTrial && (
+                  <span className="px-2 py-1 bg-yellow-500/20 text-yellow-300 text-xs rounded-full">
+                    {trialDaysLeft} days left
+                  </span>
+                )}
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-neutral-900/50 rounded-lg p-4">
+                  <div className="text-2xl font-bold text-indigo-300">
+                    {tasks.filter((t) => t.status === "done").length}
+                  </div>
+                  <div className="text-sm text-neutral-400">
+                    Tasks Completed
+                  </div>
+                </div>
+                <div className="bg-neutral-900/50 rounded-lg p-4">
+                  <div className="text-2xl font-bold text-indigo-300">
+                    {Math.round(
+                      tasks.reduce(
+                        (acc, task) => acc + (task.timeUsed || 0),
+                        0
+                      ) / 60
+                    )}
+                    m
+                  </div>
+                  <div className="text-sm text-neutral-400">Total Time</div>
+                </div>
+                <div className="bg-neutral-900/50 rounded-lg p-4">
+                  <div className="text-2xl font-bold text-indigo-300">
+                    {Math.round(
+                      tasks.reduce(
+                        (acc, task) => acc + (task.timeUsed || 0),
+                        0
+                      ) /
+                        60 /
+                        Math.max(
+                          1,
+                          tasks.filter((t) => t.status === "done").length
+                        )
+                    )}
+                    m
+                  </div>
+                  <div className="text-sm text-neutral-400">Avg per Task</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Board */}
         <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-5">
@@ -968,6 +1076,43 @@ export const GamifiedDashboard: React.FC<DashboardProps> = ({ user }) => {
                     ))}
                   </div>
                 </div>
+
+                {/* Premium Features */}
+                {!isPremium && (
+                  <div className="rounded-lg bg-gradient-to-r from-amber-500/10 to-orange-500/10 ring-1 ring-amber-500/20 p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Lock className="w-4 h-4 text-amber-400" />
+                      <span className="text-sm font-medium text-amber-200">
+                        Premium Features
+                      </span>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 text-sm text-amber-300/80">
+                        <div className="w-2 h-2 bg-amber-400 rounded-full"></div>
+                        Priority levels (High, Medium, Low)
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-amber-300/80">
+                        <div className="w-2 h-2 bg-amber-400 rounded-full"></div>
+                        Advanced scheduling & deadlines
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-amber-300/80">
+                        <div className="w-2 h-2 bg-amber-400 rounded-full"></div>
+                        Custom task templates
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowModal(false);
+                        setPaywallFeature("Advanced Task Features");
+                        setShowPaywall(true);
+                      }}
+                      className="mt-3 w-full px-3 py-2 bg-gradient-to-r from-amber-400 to-orange-500 text-white font-semibold rounded-lg hover:from-amber-500 hover:to-orange-600 transition-all duration-200 text-sm"
+                    >
+                      Upgrade to Unlock
+                    </button>
+                  </div>
+                )}
                 <div className="flex justify-end gap-2 pt-2">
                   <button
                     type="button"
@@ -1213,6 +1358,14 @@ export const GamifiedDashboard: React.FC<DashboardProps> = ({ user }) => {
           </div>
         </div>
       )}
+
+      {/* Paywall Modal */}
+      <Paywall
+        isOpen={showPaywall}
+        onClose={() => setShowPaywall(false)}
+        feature={paywallFeature}
+        userId={user?.id}
+      />
     </div>
   );
 };

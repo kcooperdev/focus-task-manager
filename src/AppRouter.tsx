@@ -8,6 +8,7 @@ import { GamifiedDashboard } from "./components/GamifiedDashboard";
 // SetupInstructions component not present; fall back to landing page when needed
 import { MagicLinkAuth } from "./components/MagicLinkAuth";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+import { SubscriptionProvider } from "./contexts/SubscriptionContext";
 import { supabase } from "./lib/supabase";
 
 export function AppRouter() {
@@ -89,41 +90,43 @@ export function AppRouter() {
   }
 
   return (
-    <ErrorBoundary>
-      <Routes>
-        <Route path="/" element={<App />} />
-        <Route path="/auth" element={<MagicLinkAuth />} />
-        <Route
-          path="/dashboard"
-          element={
-            user ? (
-              <Dashboard user={user} />
-            ) : (
-              <AuthForm onAuthSuccess={handleAuthSuccess} />
-            )
-          }
-        />
-        <Route
-          path="/projects"
-          element={
-            user ? (
-              <ProjectList user={user} />
-            ) : (
-              <AuthForm onAuthSuccess={handleAuthSuccess} />
-            )
-          }
-        />
-        <Route
-          path="/project/:projectId"
-          element={
-            user ? (
-              <GamifiedDashboard user={user} />
-            ) : (
-              <AuthForm onAuthSuccess={handleAuthSuccess} />
-            )
-          }
-        />
-      </Routes>
-    </ErrorBoundary>
+    <SubscriptionProvider>
+      <ErrorBoundary>
+        <Routes>
+          <Route path="/" element={<App />} />
+          <Route path="/auth" element={<MagicLinkAuth />} />
+          <Route
+            path="/dashboard"
+            element={
+              user ? (
+                <Dashboard user={user} />
+              ) : (
+                <AuthForm onAuthSuccess={handleAuthSuccess} />
+              )
+            }
+          />
+          <Route
+            path="/projects"
+            element={
+              user ? (
+                <ProjectList user={user} />
+              ) : (
+                <AuthForm onAuthSuccess={handleAuthSuccess} />
+              )
+            }
+          />
+          <Route
+            path="/project/:projectId"
+            element={
+              user ? (
+                <GamifiedDashboard user={user} />
+              ) : (
+                <AuthForm onAuthSuccess={handleAuthSuccess} />
+              )
+            }
+          />
+        </Routes>
+      </ErrorBoundary>
+    </SubscriptionProvider>
   );
 }
