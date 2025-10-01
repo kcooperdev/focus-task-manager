@@ -19,6 +19,12 @@ import {
   Sparkles,
   GripVertical,
   Trash,
+  ChevronDown,
+  ChevronRight,
+  Tag,
+  Edit3,
+  Folder,
+  FolderOpen,
 } from "lucide-react";
 
 interface Project {
@@ -32,6 +38,21 @@ interface Project {
   task_count?: number;
   completed_count?: number;
   total_xp?: number;
+  category_id?: number;
+  category?: {
+    id: number;
+    name: string;
+    color: string;
+  };
+}
+
+interface Category {
+  id: number;
+  user_id: string;
+  name: string;
+  color: string;
+  created_at: string;
+  updated_at: string;
 }
 
 interface ProjectListProps {
@@ -41,6 +62,7 @@ interface ProjectListProps {
 export const ProjectList: React.FC<ProjectListProps> = ({ user }) => {
   const navigate = useNavigate();
   const [projects, setProjects] = useState<Project[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -48,10 +70,19 @@ export const ProjectList: React.FC<ProjectListProps> = ({ user }) => {
   const [sortBy, setSortBy] = useState("recent");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [showFilterMenu, setShowFilterMenu] = useState(false);
+  const [collapsedCategories, setCollapsedCategories] = useState<Set<number>>(
+    new Set()
+  );
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [newCategoryColor, setNewCategoryColor] = useState("#6366f1");
   const [showNewProjectModal, setShowNewProjectModal] = useState(false);
   const [newProjectName, setNewProjectName] = useState("");
   const [newProjectDescription, setNewProjectDescription] = useState("");
   const [newProjectColor, setNewProjectColor] = useState("blue");
+  const [newProjectCategory, setNewProjectCategory] = useState<number | null>(
+    null
+  );
   const [draggedProject, setDraggedProject] = useState<number | null>(null);
   const [isDragOverTrash, setIsDragOverTrash] = useState(false);
   const [showTrashZone, setShowTrashZone] = useState(false);
@@ -63,6 +94,7 @@ export const ProjectList: React.FC<ProjectListProps> = ({ user }) => {
   // Load projects with task statistics
   useEffect(() => {
     loadProjects();
+    loadCategories();
     loadProfile();
   }, []);
 
@@ -85,13 +117,38 @@ export const ProjectList: React.FC<ProjectListProps> = ({ user }) => {
     }
   };
 
+  const loadCategories = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("categories")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("name", { ascending: true });
+
+      if (error) {
+        console.error("Error loading categories:", error);
+        return;
+      }
+
+      setCategories(data || []);
+      console.log("Loaded categories:", data);
+    } catch (error) {
+      console.error("Failed to load categories:", error);
+    }
+  };
+
   const loadProjects = async () => {
     setLoading(true);
     try {
-      // Get projects
+      // Get projects with categories
       const { data: projectsData, error: projectsError } = await supabase
         .from("projects")
-        .select("*")
+        .select(
+          `
+          *,
+          categories(id, name, color)
+        `
+        )
         .eq("user_id", user.id)
         .order("updated_at", { ascending: false });
 
@@ -206,6 +263,36 @@ export const ProjectList: React.FC<ProjectListProps> = ({ user }) => {
     }
   };
 
+  const createCategory = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCategoryName.trim()) return;
+
+    try {
+      const { data, error } = await supabase
+        .from("categories")
+        .insert([
+          {
+            user_id: user.id,
+            name: newCategoryName.trim(),
+            color: newCategoryColor,
+          },
+        ])
+        .select();
+
+      if (error) {
+        console.error("Error creating category:", error);
+        return;
+      }
+
+      setCategories([...categories, data[0]]);
+      setNewCategoryName("");
+      setNewCategoryColor("#6366f1");
+      setShowCategoryModal(false);
+    } catch (error) {
+      console.error("Failed to create category:", error);
+    }
+  };
+
   const createProject = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newProjectName.trim()) return;
@@ -219,6 +306,7 @@ export const ProjectList: React.FC<ProjectListProps> = ({ user }) => {
             name: newProjectName.trim(),
             description: newProjectDescription.trim(),
             color: newProjectColor,
+            category_id: newProjectCategory,
           },
         ])
         .select();
@@ -231,10 +319,44 @@ export const ProjectList: React.FC<ProjectListProps> = ({ user }) => {
       setNewProjectName("");
       setNewProjectDescription("");
       setNewProjectColor("blue");
+      setNewProjectCategory(null);
       setShowNewProjectModal(false);
       loadProjects(); // Reload to get updated stats
     } catch (error) {
       console.error("Failed to create project:", error);
+    }
+  };
+
+  const toggleCategoryCollapse = (categoryId: number) => {
+    setCollapsedCategories((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(categoryId)) {
+        newSet.delete(categoryId);
+      } else {
+        newSet.add(categoryId);
+      }
+      return newSet;
+    });
+  };
+
+  const assignProjectToCategory = async (
+    projectId: number,
+    categoryId: number | null
+  ) => {
+    try {
+      const { error } = await supabase
+        .from("projects")
+        .update({ category_id: categoryId })
+        .eq("id", projectId);
+
+      if (error) {
+        console.error("Error assigning project to category:", error);
+        return;
+      }
+
+      loadProjects();
+    } catch (error) {
+      console.error("Failed to assign project to category:", error);
     }
   };
 
@@ -379,6 +501,13 @@ export const ProjectList: React.FC<ProjectListProps> = ({ user }) => {
                 {totalTasks} Tasks
               </span>
             </div>
+            <button
+              onClick={() => setShowCategoryModal(true)}
+              className="inline-flex items-center gap-2 rounded-md bg-purple-500/10 hover:bg-purple-500/15 ring-1 ring-inset ring-purple-500/30 text-purple-300 hover:text-purple-200 transition-colors px-3 py-1.5"
+            >
+              <Tag className="w-4 h-4" />
+              <span className="text-sm font-medium">New Category</span>
+            </button>
             <button
               onClick={() => setShowNewProjectModal(true)}
               className="inline-flex items-center gap-2 rounded-md bg-indigo-500/10 hover:bg-indigo-500/15 ring-1 ring-inset ring-indigo-500/30 text-indigo-300 hover:text-indigo-200 transition-colors px-3 py-1.5"
@@ -559,200 +688,462 @@ export const ProjectList: React.FC<ProjectListProps> = ({ user }) => {
             </div>
           </div>
         ) : (
-          <div
-            className={
-              viewMode === "grid"
-                ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6"
-                : "space-y-3"
-            }
-          >
-            {filteredProjects.map((project) => {
-              const progress = project.task_count
-                ? Math.round(
-                    ((project.completed_count || 0) / project.task_count) * 100
-                  )
-                : 0;
-
-              if (viewMode === "list") {
-                return (
-                  <div
-                    key={project.id}
-                    className={`group grid grid-cols-12 gap-3 items-center rounded-xl px-3 py-3 bg-neutral-900/60 ring-1 ring-white/10 hover:ring-white/20 hover:bg-neutral-900 transition ${
-                      draggedProject === project.id ? "opacity-50 scale-95" : ""
-                    }`}
-                  >
-                    <div className="col-span-8 sm:col-span-6 flex items-center gap-3 min-w-0">
-                      {/* Drag Handle for List View */}
-                      <div
-                        className="w-6 h-6 bg-neutral-800/80 rounded-md flex items-center justify-center cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity"
-                        draggable
-                        onDragStart={(e) => handleDragStart(e, project.id)}
-                        onDragEnd={handleDragEnd}
-                      >
-                        <GripVertical className="w-3 h-3 text-neutral-400" />
-                      </div>
-
-                      <div
-                        className={`h-12 w-16 rounded-md bg-gradient-to-br ${
-                          colorClasses[
-                            project.color as keyof typeof colorClasses
-                          ] || colorClasses.blue
-                        } ring-1 ring-white/10 flex items-center justify-center`}
-                      >
-                        <span className="text-white font-semibold text-lg">
-                          {project.name.charAt(0).toUpperCase()}
-                        </span>
-                      </div>
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <h3 className="text-white font-semibold tracking-tight truncate">
-                            {project.name}
-                          </h3>
-                          <span className="inline-flex items-center gap-1 h-6 px-2 rounded-md bg-emerald-500/10 text-emerald-200 ring-emerald-500/30 ring-1 text-[11px]">
-                            Active
-                          </span>
-                        </div>
-                        <div className="mt-1 text-[11px] text-neutral-400">
-                          {project.description || "No description"}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="col-span-4 sm:col-span-3">
-                      <div className="flex items-center gap-4 text-sm">
-                        <span className="inline-flex items-center gap-1.5 text-neutral-300">
-                          <ClipboardList className="w-4 h-4 text-neutral-400" />
-                          {project.task_count || 0}
-                        </span>
-                        <span className="inline-flex items-center gap-1.5 text-amber-200">
-                          <Trophy className="w-4 h-4" />
-                          {project.total_xp || 0} XP
-                        </span>
-                      </div>
-                      <div className="mt-2 h-1.5 rounded-full bg-white/5 overflow-hidden">
-                        <div
-                          className="h-full bg-gradient-to-r from-indigo-400 via-fuchsia-400 to-emerald-400"
-                          style={{ width: `${progress}%` }}
-                        ></div>
-                      </div>
-                    </div>
-
-                    <div className="col-span-12 sm:col-span-3 flex items-center justify-between sm:justify-end gap-3">
-                      <Link
-                        to={`/project/${project.id}`}
-                        className="inline-flex items-center gap-2 h-8 px-3 rounded-md bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 text-sm"
-                      >
-                        <KanbanSquare className="w-4 h-4" />
-                        Open
-                      </Link>
-                      <button
-                        onClick={() => deleteProject(project.id)}
-                        className="inline-flex items-center justify-center h-8 w-8 rounded-md hover:bg-white/5 text-neutral-400"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
+          <div className="space-y-6">
+            {/* Uncategorized Projects */}
+            {filteredProjects.filter((p) => !p.category_id).length > 0 && (
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3 text-lg font-semibold text-white">
+                    <Folder className="w-5 h-5 text-neutral-400" />
+                    <span>Uncategorized</span>
                   </div>
-                );
-              }
+                  <span className="text-sm text-neutral-400">
+                    {filteredProjects.filter((p) => !p.category_id).length}{" "}
+                    {filteredProjects.filter((p) => !p.category_id).length === 1
+                      ? "project"
+                      : "projects"}
+                  </span>
+                </div>
+                <div
+                  className={
+                    viewMode === "grid"
+                      ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6"
+                      : "space-y-3"
+                  }
+                >
+                  {filteredProjects
+                    .filter((p) => !p.category_id)
+                    .map((project) => {
+                      const progress = project.task_count
+                        ? Math.round(
+                            ((project.completed_count || 0) /
+                              project.task_count) *
+                              100
+                          )
+                        : 0;
+
+                      if (viewMode === "list") {
+                        return (
+                          <div
+                            key={project.id}
+                            className={`group grid grid-cols-12 gap-3 items-center rounded-xl px-3 py-3 bg-neutral-900/60 ring-1 ring-white/10 hover:ring-white/20 hover:bg-neutral-900 transition ${
+                              draggedProject === project.id
+                                ? "opacity-50 scale-95"
+                                : ""
+                            }`}
+                          >
+                            <div className="col-span-8 sm:col-span-6 flex items-center gap-3 min-w-0">
+                              {/* Drag Handle for List View */}
+                              <div
+                                className="w-6 h-6 bg-neutral-800/80 rounded-md flex items-center justify-center cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity"
+                                draggable
+                                onDragStart={(e) =>
+                                  handleDragStart(e, project.id)
+                                }
+                                onDragEnd={handleDragEnd}
+                              >
+                                <GripVertical className="w-3 h-3 text-neutral-400" />
+                              </div>
+
+                              <div
+                                className={`h-12 w-16 rounded-md bg-gradient-to-br ${
+                                  colorClasses[
+                                    project.color as keyof typeof colorClasses
+                                  ] || colorClasses.blue
+                                } ring-1 ring-white/10 flex items-center justify-center`}
+                              >
+                                <span className="text-white font-semibold text-lg">
+                                  {project.name.charAt(0).toUpperCase()}
+                                </span>
+                              </div>
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <h3 className="text-white font-semibold tracking-tight truncate">
+                                    {project.name}
+                                  </h3>
+                                  <span className="inline-flex items-center gap-1 h-6 px-2 rounded-md bg-emerald-500/10 text-emerald-200 ring-emerald-500/30 ring-1 text-[11px]">
+                                    Active
+                                  </span>
+                                </div>
+                                <div className="mt-1 text-[11px] text-neutral-400">
+                                  {project.description || "No description"}
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="col-span-4 sm:col-span-3">
+                              <div className="flex items-center gap-4 text-sm">
+                                <span className="inline-flex items-center gap-1.5 text-neutral-300">
+                                  <ClipboardList className="w-4 h-4 text-neutral-400" />
+                                  {project.task_count || 0}
+                                </span>
+                                <span className="inline-flex items-center gap-1.5 text-amber-200">
+                                  <Trophy className="w-4 h-4" />
+                                  {project.total_xp || 0} XP
+                                </span>
+                              </div>
+                              <div className="mt-2 h-1.5 rounded-full bg-white/5 overflow-hidden">
+                                <div
+                                  className="h-full bg-gradient-to-r from-indigo-400 via-fuchsia-400 to-emerald-400"
+                                  style={{ width: `${progress}%` }}
+                                ></div>
+                              </div>
+                            </div>
+
+                            <div className="col-span-12 sm:col-span-3 flex items-center justify-between sm:justify-end gap-3">
+                              <Link
+                                to={`/project/${project.id}`}
+                                className="inline-flex items-center gap-2 h-8 px-3 rounded-md bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 text-sm"
+                              >
+                                <KanbanSquare className="w-4 h-4" />
+                                Open
+                              </Link>
+                              <button
+                                onClick={() => deleteProject(project.id)}
+                                className="inline-flex items-center justify-center h-8 w-8 rounded-md hover:bg-white/5 text-neutral-400"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <div
+                          key={project.id}
+                          className={`group block rounded-2xl overflow-hidden bg-neutral-900/60 ring-1 ring-white/10 hover:ring-white/20 hover:bg-neutral-900 transition ${
+                            draggedProject === project.id
+                              ? "opacity-50 scale-95"
+                              : ""
+                          }`}
+                        >
+                          {/* Drag Handle */}
+                          <div
+                            className="absolute top-2 right-2 z-10 w-6 h-6 bg-neutral-800/80 rounded-md flex items-center justify-center cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity"
+                            draggable
+                            onDragStart={(e) => handleDragStart(e, project.id)}
+                            onDragEnd={handleDragEnd}
+                          >
+                            <GripVertical className="w-3 h-3 text-neutral-400" />
+                          </div>
+
+                          <Link
+                            to={`/project/${project.id}`}
+                            className={`block ${
+                              draggedProject === project.id ? "opacity-50" : ""
+                            }`}
+                            draggable
+                            onDragStart={(e) => handleDragStart(e, project.id)}
+                            onDragEnd={handleDragEnd}
+                          >
+                            <div className="relative aspect-[16/9] overflow-hidden">
+                              <div
+                                className={`h-full w-full bg-gradient-to-br ${
+                                  colorClasses[
+                                    project.color as keyof typeof colorClasses
+                                  ] || colorClasses.blue
+                                } flex items-center justify-center`}
+                              >
+                                <span className="text-white font-bold text-4xl">
+                                  {project.name.charAt(0).toUpperCase()}
+                                </span>
+                              </div>
+                              <div className="absolute inset-0 bg-gradient-to-t from-neutral-950/80 via-neutral-950/10 to-transparent"></div>
+                              <div className="absolute top-3 left-3">
+                                <span className="inline-flex items-center gap-1 h-7 px-2 rounded-md bg-emerald-500/10 text-emerald-200 ring-emerald-500/30 ring-1 text-[11px] backdrop-blur">
+                                  Active
+                                </span>
+                              </div>
+                              <div className="absolute bottom-3 left-3 right-3">
+                                <div className="flex items-center justify-between">
+                                  <div className="min-w-0">
+                                    <h3 className="text-white text-lg font-semibold tracking-tight truncate">
+                                      {project.name}
+                                    </h3>
+                                    <p className="text-[11px] text-neutral-400 truncate">
+                                      {project.description || "No description"}
+                                    </p>
+                                  </div>
+                                  <div className="text-right">
+                                    <div className="text-white text-sm font-medium">
+                                      {project.task_count || 0}
+                                    </div>
+                                    <div className="text-[11px] text-neutral-400">
+                                      tasks
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="p-3 sm:p-4">
+                              <div className="flex items-center justify-between gap-2">
+                                <div className="flex items-center gap-3 text-sm">
+                                  <span className="inline-flex items-center gap-1.5 text-neutral-300">
+                                    <ClipboardList className="w-4 h-4 text-neutral-400" />
+                                    {project.task_count || 0}
+                                  </span>
+                                  <span className="inline-flex items-center gap-1.5 text-amber-200">
+                                    <Trophy className="w-4 h-4" />
+                                    {project.total_xp || 0} XP
+                                  </span>
+                                </div>
+                              </div>
+
+                              <div className="mt-3">
+                                <div className="flex items-center justify-between text-xs">
+                                  <span className="text-neutral-400">
+                                    Progress
+                                  </span>
+                                  <span className="text-neutral-300">
+                                    {project.completed_count || 0}/
+                                    {project.task_count || 0}
+                                  </span>
+                                </div>
+                                <div className="mt-1.5 h-2 rounded-full bg-white/5 ring-1 ring-inset ring-white/5 overflow-hidden">
+                                  <div
+                                    className="h-full bg-gradient-to-r from-indigo-400 via-fuchsia-400 to-emerald-400"
+                                    style={{ width: `${progress}%` }}
+                                  ></div>
+                                </div>
+                              </div>
+                            </div>
+                          </Link>
+                        </div>
+                      );
+                    })}
+                </div>
+              </div>
+            )}
+
+            {/* Categorized Projects */}
+            {categories.map((category) => {
+              const categoryProjects = filteredProjects.filter(
+                (p) => p.category_id === category.id
+              );
+              if (categoryProjects.length === 0) return null;
 
               return (
-                <div
-                  key={project.id}
-                  className={`group block rounded-2xl overflow-hidden bg-neutral-900/60 ring-1 ring-white/10 hover:ring-white/20 hover:bg-neutral-900 transition ${
-                    draggedProject === project.id ? "opacity-50 scale-95" : ""
-                  }`}
-                >
-                  {/* Drag Handle */}
-                  <div
-                    className="absolute top-2 right-2 z-10 w-6 h-6 bg-neutral-800/80 rounded-md flex items-center justify-center cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity"
-                    draggable
-                    onDragStart={(e) => handleDragStart(e, project.id)}
-                    onDragEnd={handleDragEnd}
-                  >
-                    <GripVertical className="w-3 h-3 text-neutral-400" />
+                <div key={category.id}>
+                  <div className="flex items-center justify-between mb-4">
+                    <button
+                      onClick={() => toggleCategoryCollapse(category.id)}
+                      className="flex items-center gap-3 text-lg font-semibold text-white hover:text-neutral-200 transition-colors group"
+                    >
+                      {collapsedCategories.has(category.id) ? (
+                        <ChevronRight className="w-4 h-4 text-neutral-400 group-hover:text-neutral-300" />
+                      ) : (
+                        <ChevronDown className="w-4 h-4 text-neutral-400 group-hover:text-neutral-300" />
+                      )}
+                      {collapsedCategories.has(category.id) ? (
+                        <Folder
+                          className="w-5 h-5"
+                          style={{ color: category.color }}
+                        />
+                      ) : (
+                        <FolderOpen
+                          className="w-5 h-5"
+                          style={{ color: category.color }}
+                        />
+                      )}
+                      <span>{category.name}</span>
+                    </button>
+                    <span className="text-sm text-neutral-400">
+                      {categoryProjects.length}{" "}
+                      {categoryProjects.length === 1 ? "project" : "projects"}
+                    </span>
                   </div>
 
-                  <Link
-                    to={`/project/${project.id}`}
-                    className={`block ${
-                      draggedProject === project.id ? "opacity-50" : ""
-                    }`}
-                    draggable
-                    onDragStart={(e) => handleDragStart(e, project.id)}
-                    onDragEnd={handleDragEnd}
-                  >
-                    <div className="relative aspect-[16/9] overflow-hidden">
-                      <div
-                        className={`h-full w-full bg-gradient-to-br ${
-                          colorClasses[
-                            project.color as keyof typeof colorClasses
-                          ] || colorClasses.blue
-                        } flex items-center justify-center`}
-                      >
-                        <span className="text-white font-bold text-4xl">
-                          {project.name.charAt(0).toUpperCase()}
-                        </span>
-                      </div>
-                      <div className="absolute inset-0 bg-gradient-to-t from-neutral-950/80 via-neutral-950/10 to-transparent"></div>
-                      <div className="absolute top-3 left-3">
-                        <span className="inline-flex items-center gap-1 h-7 px-2 rounded-md bg-emerald-500/10 text-emerald-200 ring-emerald-500/30 ring-1 text-[11px] backdrop-blur">
-                          Active
-                        </span>
-                      </div>
-                      <div className="absolute bottom-3 left-3 right-3">
-                        <div className="flex items-center justify-between">
-                          <div className="min-w-0">
-                            <h3 className="text-white text-lg font-semibold tracking-tight truncate">
-                              {project.name}
-                            </h3>
-                            <p className="text-[11px] text-neutral-400 truncate">
-                              {project.description || "No description"}
-                            </p>
-                          </div>
-                          <div className="text-right">
-                            <div className="text-white text-sm font-medium">
-                              {project.task_count || 0}
-                            </div>
-                            <div className="text-[11px] text-neutral-400">
-                              tasks
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+                  {!collapsedCategories.has(category.id) && (
+                    <div
+                      className={
+                        viewMode === "grid"
+                          ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6"
+                          : "space-y-3"
+                      }
+                    >
+                      {categoryProjects.map((project) => {
+                        const progress = project.task_count
+                          ? Math.round(
+                              ((project.completed_count || 0) /
+                                project.task_count) *
+                                100
+                            )
+                          : 0;
 
-                    <div className="p-3 sm:p-4">
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-3 text-sm">
-                          <span className="inline-flex items-center gap-1.5 text-neutral-300">
-                            <ClipboardList className="w-4 h-4 text-neutral-400" />
-                            {project.task_count || 0}
-                          </span>
-                          <span className="inline-flex items-center gap-1.5 text-amber-200">
-                            <Trophy className="w-4 h-4" />
-                            {project.total_xp || 0} XP
-                          </span>
-                        </div>
-                      </div>
+                        if (viewMode === "list") {
+                          return (
+                            <div
+                              key={project.id}
+                              className={`group grid grid-cols-12 gap-3 items-center rounded-xl px-3 py-3 bg-neutral-900/60 ring-1 ring-white/10 hover:ring-white/20 hover:bg-neutral-900 transition ${
+                                draggedProject === project.id
+                                  ? "opacity-50 scale-95"
+                                  : ""
+                              }`}
+                            >
+                              <div className="col-span-8 sm:col-span-6 flex items-center gap-3 min-w-0">
+                                <div
+                                  className="w-6 h-6 bg-neutral-800/80 rounded-md flex items-center justify-center cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity"
+                                  draggable
+                                  onDragStart={(e) =>
+                                    handleDragStart(e, project.id)
+                                  }
+                                  onDragEnd={handleDragEnd}
+                                >
+                                  <GripVertical className="w-3 h-3 text-neutral-400" />
+                                </div>
 
-                      <div className="mt-3">
-                        <div className="flex items-center justify-between text-xs">
-                          <span className="text-neutral-400">Progress</span>
-                          <span className="text-neutral-300">
-                            {project.completed_count || 0}/
-                            {project.task_count || 0}
-                          </span>
-                        </div>
-                        <div className="mt-1.5 h-2 rounded-full bg-white/5 ring-1 ring-inset ring-white/5 overflow-hidden">
+                                <div
+                                  className={`h-12 w-16 rounded-md bg-gradient-to-br ${
+                                    colorClasses[
+                                      project.color as keyof typeof colorClasses
+                                    ] || colorClasses.blue
+                                  } ring-1 ring-white/10 flex items-center justify-center`}
+                                >
+                                  <span className="text-white font-semibold text-lg">
+                                    {project.name.charAt(0).toUpperCase()}
+                                  </span>
+                                </div>
+                                <div className="min-w-0">
+                                  <div className="flex items-center gap-2">
+                                    <h3 className="text-white font-semibold tracking-tight truncate">
+                                      {project.name}
+                                    </h3>
+                                    <span className="inline-flex items-center gap-1 h-6 px-2 rounded-md bg-emerald-500/10 text-emerald-200 ring-emerald-500/30 ring-1 text-[11px]">
+                                      Active
+                                    </span>
+                                  </div>
+                                  <div className="mt-1 text-[11px] text-neutral-400">
+                                    {project.description || "No description"}
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="col-span-4 sm:col-span-3">
+                                <div className="flex items-center gap-4 text-sm">
+                                  <span className="inline-flex items-center gap-1.5 text-neutral-300">
+                                    <ClipboardList className="w-4 h-4 text-neutral-400" />
+                                    {project.task_count || 0}
+                                  </span>
+                                  <span className="inline-flex items-center gap-1.5 text-amber-200">
+                                    <Trophy className="w-4 h-4" />
+                                    {project.total_xp || 0} XP
+                                  </span>
+                                </div>
+                                <div className="mt-2 h-1.5 rounded-full bg-white/5 overflow-hidden">
+                                  <div
+                                    className="h-full bg-gradient-to-r from-indigo-400 via-fuchsia-400 to-emerald-400"
+                                    style={{ width: `${progress}%` }}
+                                  ></div>
+                                </div>
+                              </div>
+
+                              <div className="col-span-12 sm:col-span-3 flex items-center justify-between sm:justify-end gap-3">
+                                <Link
+                                  to={`/project/${project.id}`}
+                                  className="inline-flex items-center gap-2 h-8 px-3 rounded-md bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 text-sm"
+                                >
+                                  <KanbanSquare className="w-4 h-4" />
+                                  Open
+                                </Link>
+                                <button
+                                  onClick={() => deleteProject(project.id)}
+                                  className="inline-flex items-center justify-center h-8 w-8 rounded-md hover:bg-white/5 text-neutral-400"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        }
+
+                        return (
                           <div
-                            className="h-full bg-gradient-to-r from-indigo-400 via-fuchsia-400 to-emerald-400"
-                            style={{ width: `${progress}%` }}
-                          ></div>
-                        </div>
-                      </div>
+                            key={project.id}
+                            className={`group block rounded-2xl overflow-hidden bg-neutral-900/60 ring-1 ring-white/10 hover:ring-white/20 hover:bg-neutral-900 transition ${
+                              draggedProject === project.id
+                                ? "opacity-50 scale-95"
+                                : ""
+                            }`}
+                          >
+                            <div
+                              className="w-6 h-6 bg-neutral-800/80 rounded-md flex items-center justify-center cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity absolute top-3 left-3 z-10"
+                              draggable
+                              onDragStart={(e) =>
+                                handleDragStart(e, project.id)
+                              }
+                              onDragEnd={handleDragEnd}
+                            >
+                              <GripVertical className="w-3 h-3 text-neutral-400" />
+                            </div>
+                            <Link
+                              to={`/project/${project.id}`}
+                              className={`block ${
+                                draggedProject === project.id
+                                  ? "opacity-50"
+                                  : ""
+                              }`}
+                              draggable
+                              onDragStart={(e) =>
+                                handleDragStart(e, project.id)
+                              }
+                              onDragEnd={handleDragEnd}
+                            >
+                              <div
+                                className={`h-32 bg-gradient-to-br ${
+                                  colorClasses[
+                                    project.color as keyof typeof colorClasses
+                                  ] || colorClasses.blue
+                                } flex items-center justify-center`}
+                              >
+                                <span className="text-white font-bold text-4xl">
+                                  {project.name.charAt(0).toUpperCase()}
+                                </span>
+                              </div>
+                              <div className="p-4">
+                                <div className="flex items-center justify-between mb-2">
+                                  <h3 className="text-white font-semibold tracking-tight">
+                                    {project.name}
+                                  </h3>
+                                  <span className="inline-flex items-center gap-1 h-6 px-2 rounded-md bg-emerald-500/10 text-emerald-200 ring-emerald-500/30 ring-1 text-[11px]">
+                                    Active
+                                  </span>
+                                </div>
+                                <p className="text-sm text-neutral-400 mb-3 line-clamp-2">
+                                  {project.description || "No description"}
+                                </p>
+                                <div className="space-y-2">
+                                  <div className="flex items-center justify-between text-sm">
+                                    <span className="inline-flex items-center gap-1.5 text-neutral-300">
+                                      <ClipboardList className="w-4 h-4 text-neutral-400" />
+                                      {project.task_count || 0} tasks
+                                    </span>
+                                    <span className="inline-flex items-center gap-1.5 text-amber-200">
+                                      <Trophy className="w-4 h-4" />
+                                      {project.total_xp || 0} XP
+                                    </span>
+                                  </div>
+                                  <div className="space-y-1">
+                                    <div className="flex items-center justify-between text-xs text-neutral-400">
+                                      <span>Progress</span>
+                                      <span>{progress}%</span>
+                                    </div>
+                                    <div className="h-1.5 rounded-full bg-white/5 overflow-hidden">
+                                      <div
+                                        className="h-full bg-gradient-to-r from-indigo-400 via-fuchsia-400 to-emerald-400"
+                                        style={{ width: `${progress}%` }}
+                                      ></div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </Link>
+                          </div>
+                        );
+                      })}
                     </div>
-                  </Link>
+                  )}
                 </div>
               );
             })}
@@ -867,6 +1258,93 @@ export const ProjectList: React.FC<ProjectListProps> = ({ user }) => {
           </div>
         </div>
       )}
+      {/* Create Category Modal */}
+      {showCategoryModal && (
+        <div className="fixed inset-0 z-50">
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={() => setShowCategoryModal(false)}
+          ></div>
+          <div className="relative mx-auto max-w-md w-full mt-24 px-4">
+            <div className="rounded-xl bg-neutral-950 ring-1 ring-white/10 overflow-hidden">
+              <div className="px-4 py-3 border-b border-white/5 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Tag className="w-4.5 h-4.5 text-neutral-300" />
+                  <h3 className="text-[17px] tracking-tight font-semibold">
+                    Create Category
+                  </h3>
+                </div>
+                <button
+                  onClick={() => setShowCategoryModal(false)}
+                  className="p-1.5 rounded-md hover:bg-neutral-900 ring-1 ring-inset ring-white/10/0 hover:ring-white/10 transition"
+                >
+                  <X className="w-4 h-4 text-neutral-300" />
+                </button>
+              </div>
+              <form onSubmit={createCategory} className="p-4 space-y-4">
+                <div>
+                  <label className="block text-sm text-neutral-300 mb-1.5">
+                    Name
+                  </label>
+                  <input
+                    type="text"
+                    value={newCategoryName}
+                    onChange={(e) => setNewCategoryName(e.target.value)}
+                    placeholder="Category name..."
+                    className="w-full px-3 py-2 bg-neutral-800 border border-neutral-700 rounded-lg text-neutral-200 placeholder-neutral-400 focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-neutral-300 mb-1.5">
+                    Color
+                  </label>
+                  <div className="flex gap-2">
+                    {[
+                      "#6366f1",
+                      "#3b82f6",
+                      "#10b981",
+                      "#f59e0b",
+                      "#ef4444",
+                      "#8b5cf6",
+                      "#06b6d4",
+                      "#84cc16",
+                    ].map((color) => (
+                      <button
+                        key={color}
+                        type="button"
+                        onClick={() => setNewCategoryColor(color)}
+                        className={`w-8 h-8 rounded-full border-2 transition-all ${
+                          newCategoryColor === color
+                            ? "border-white scale-110"
+                            : "border-neutral-600 hover:border-neutral-400"
+                        }`}
+                        style={{ backgroundColor: color }}
+                      />
+                    ))}
+                  </div>
+                </div>
+                <div className="flex justify-end gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowCategoryModal(false)}
+                    className="px-3 py-2 rounded-md bg-neutral-900 hover:bg-neutral-800 ring-1 ring-white/10 text-neutral-200 transition"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-3 py-2 rounded-md bg-purple-500 hover:bg-purple-600 text-white transition"
+                  >
+                    Create Category
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* New Project Modal */}
       {showNewProjectModal && (
         <div className="fixed inset-0 z-50">
@@ -940,6 +1418,29 @@ export const ProjectList: React.FC<ProjectListProps> = ({ user }) => {
                     ))}
                   </div>
                 </div>
+
+                <div>
+                  <label className="block text-sm text-neutral-300 mb-1.5">
+                    Category
+                  </label>
+                  <select
+                    value={newProjectCategory || ""}
+                    onChange={(e) =>
+                      setNewProjectCategory(
+                        e.target.value ? parseInt(e.target.value) : null
+                      )
+                    }
+                    className="w-full px-3 py-2 bg-neutral-800 border border-neutral-700 rounded-lg text-neutral-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  >
+                    <option value="">No category</option>
+                    {categories.map((category) => (
+                      <option key={category.id} value={category.id}>
+                        {category.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
                 <div className="flex justify-end gap-2 pt-2">
                   <button
                     type="button"

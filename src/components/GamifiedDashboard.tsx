@@ -45,7 +45,7 @@ export const GamifiedDashboard: React.FC<DashboardProps> = ({ user }) => {
   const [level, setLevel] = useState(1);
   const [showModal, setShowModal] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState("");
-  const [newTaskPoints, setNewTaskPoints] = useState(10);
+  const [newTaskPoints, setNewTaskPoints] = useState(5);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   const [toastIcon, setToastIcon] = useState("zap");
@@ -235,7 +235,7 @@ export const GamifiedDashboard: React.FC<DashboardProps> = ({ user }) => {
       } else {
         setTasks([data[0], ...tasks]);
         setNewTaskTitle("");
-        setNewTaskPoints(10);
+        setNewTaskPoints(5);
         setShowModal(false);
         showToastMessage("Task added", "square-plus", newTaskTitle);
       }
@@ -948,8 +948,8 @@ export const GamifiedDashboard: React.FC<DashboardProps> = ({ user }) => {
                   <label className="block text-sm text-neutral-300 mb-1.5">
                     Points
                   </label>
-                  <div className="grid grid-cols-4 gap-2">
-                    {[10, 20, 30, 40].map((points) => (
+                  <div className="grid grid-cols-5 gap-2">
+                    {[5, 10, 20, 30, 40].map((points) => (
                       <label key={points} className="relative">
                         <input
                           type="radio"

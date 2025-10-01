@@ -45,7 +45,8 @@ export const AppWithAuth: React.FC = () => {
     setUser(user);
   };
 
-  const handleSignOut = () => {
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
     setUser(null);
   };
 

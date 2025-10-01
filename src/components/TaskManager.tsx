@@ -10,6 +10,13 @@ interface TaskManagerProps {
   user: User | null;
 }
 
+// Helper function to format time
+const formatTime = (seconds: number) => {
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+  return `${minutes}:${remainingSeconds < 10 ? "0" : ""}${remainingSeconds}`;
+};
+
 export const TaskManager: React.FC<TaskManagerProps> = ({ user }) => {
   const { tasks, loading, error, addTask, updateTask, deleteTask } =
     useTasks(user);
@@ -89,7 +96,7 @@ export const TaskManager: React.FC<TaskManagerProps> = ({ user }) => {
             <div className="flex-1">
               <h3 className="font-medium">{task.title}</h3>
               <p className="text-sm text-gray-500">
-                Status: {task.status} | Time: {task.estimatedTime}min
+                Status: {task.status} | Time: {formatTime(task.timeUsed || 0)}
               </p>
             </div>
 
@@ -103,7 +110,7 @@ export const TaskManager: React.FC<TaskManagerProps> = ({ user }) => {
                 }
                 className="px-3 py-1 bg-green-500 text-white rounded text-sm hover:bg-green-600"
               >
-                {task.status === "in-progress" ? "Pause" : "Start"}
+                {task.status === "in-progress" ? "To Do" : "In Progress"}
               </button>
 
               <button

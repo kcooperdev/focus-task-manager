@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   fetchTasks,
   createTask,
@@ -16,6 +16,7 @@ export const useTasks = (user: User | null) => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Fetch tasks when user changes
   useEffect(() => {
@@ -25,6 +26,27 @@ export const useTasks = (user: User | null) => {
       setTasks([]);
     }
   }, [user]);
+
+  // Timer for in-progress tasks
+  useEffect(() => {
+    timerRef.current = setInterval(() => {
+      setTasks((prevTasks) =>
+        prevTasks.map((task) => {
+          if (task.status === "in-progress") {
+            const newTimeUsed = (task.timeUsed || 0) + 1;
+            return { ...task, timeUsed: newTimeUsed };
+          }
+          return task;
+        })
+      );
+    }, 1000);
+
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
+  }, []);
 
   const loadTasks = async () => {
     if (!user) return;
@@ -70,10 +92,20 @@ export const useTasks = (user: User | null) => {
     setError(null);
 
     try {
+      const taskToUpdate = tasks.find((task) => task.id === taskId);
+      if (!taskToUpdate) return;
+
       const updatedTask = await updateTask(taskId, updates);
+
       setTasks((prev) =>
         prev.map((task) => (task.id === taskId ? updatedTask : task))
       );
+
+      // If the task is paused, persist the timeUsed
+      if (updates.status === "paused" || updates.status === "completed") {
+        await updateTask(taskId, { timeUsed: taskToUpdate.timeUsed });
+      }
+
       return updatedTask;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to update task");

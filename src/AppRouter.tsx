@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
+import { Route, Routes, Navigate } from "react-router-dom";
 import { App } from "./App";
 import { AuthForm } from "./components/AuthForm";
 import { Dashboard } from "./components/Dashboard";
 import { ProjectList } from "./components/ProjectList";
 import { GamifiedDashboard } from "./components/GamifiedDashboard";
 // SetupInstructions component not present; fall back to landing page when needed
-import { SignInPage } from "./components/SignInPage";
-import { SignUpPage } from "./components/SignUpPage";
+import { MagicLinkAuth } from "./components/MagicLinkAuth";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { supabase } from "./lib/supabase";
 
@@ -90,16 +89,10 @@ export function AppRouter() {
   }
 
   return (
-    
-      <ErrorBoundary>
-        <Routes>
+    <ErrorBoundary>
+      <Routes>
         <Route path="/" element={<App />} />
-        <Route
-          path="/auth"
-          element={<AuthForm onAuthSuccess={handleAuthSuccess} />}
-        />
-        <Route path="/signin" element={<SignInPage />} />
-        <Route path="/signup" element={<SignUpPage />} />
+        <Route path="/auth" element={<MagicLinkAuth />} />
         <Route
           path="/dashboard"
           element={
@@ -130,8 +123,7 @@ export function AppRouter() {
             )
           }
         />
-        </Routes>
-      </ErrorBoundary>
-    
+      </Routes>
+    </ErrorBoundary>
   );
 }

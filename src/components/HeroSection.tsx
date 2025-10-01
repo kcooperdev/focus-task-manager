@@ -296,7 +296,7 @@ export const HeroSection = () => {
             </p>
             <div className="flex flex-wrap gap-4 pt-4">
               <Link
-                to="/signup"
+                to="/auth"
                 className="bg-white text-indigo-700 hover:bg-yellow-300 hover:text-indigo-800 transition-all px-8 py-3 rounded-xl font-bold text-lg shadow-lg inline-block"
               >
                 Get Started Free
