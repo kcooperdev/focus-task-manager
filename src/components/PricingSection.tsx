@@ -108,14 +108,13 @@ export const PricingSection = () => {
               to="/auth"
               className="w-full bg-yellow-300 hover:bg-yellow-400 text-indigo-800 transition-colors px-6 py-3 rounded-xl font-bold inline-block text-center"
             >
-              Try Premium Free For 3 Days
+              Get Premium - $15/month
             </Link>
           </div>
         </div>
         <div className="mt-12 text-center">
           <p className="text-gray-600">
-            Both plans come with a 3-day free trial. No credit card required to
-            start.
+            Premium plan unlocks all advanced features. Cancel anytime.
           </p>
           <div className="mt-6 inline-flex items-center gap-2 bg-indigo-100 text-indigo-800 px-4 py-2 rounded-full">
             <CheckIcon className="h-4 w-4" />

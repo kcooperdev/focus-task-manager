@@ -18,27 +18,26 @@ export class StripeService {
       // Simulate API delay
       await new Promise((resolve) => setTimeout(resolve, 1500));
 
-      // For demo, we'll simulate starting a trial by updating local storage
-      const trialData = {
+      // For demo, we'll simulate starting a premium subscription by updating local storage
+      const premiumData = {
         isActive: true,
-        isTrial: true,
-        trialEndsAt: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // 3 days from now
+        isTrial: false,
         planType: "premium",
         userId: userId,
       };
 
-      localStorage.setItem("subscription_status", JSON.stringify(trialData));
+      localStorage.setItem("subscription_status", JSON.stringify(premiumData));
 
       // Show success message and refresh
       setTimeout(() => {
         alert(
-          "🎉 Trial started! You now have 3 days of premium access. The page will refresh to show your new features!"
+          "🎉 Premium activated! You now have full access to all premium features. The page will refresh to show your new features!"
         );
         window.location.reload();
       }, 100);
     } catch (error) {
       console.error("Error creating checkout session:", error);
-      alert("Error starting trial. Please try again.");
+      alert("Error getting premium. Please try again.");
     }
   }
 
@@ -52,22 +51,18 @@ export class StripeService {
         const isTrial = data.isTrial;
         const trialEndsAt = data.trialEndsAt;
 
-        if (isTrial && trialEndsAt) {
-          const daysLeft = Math.ceil(
-            (new Date(trialEndsAt).getTime() - Date.now()) /
-              (1000 * 60 * 60 * 24)
-          );
+        if (data.isActive) {
           alert(
-            `🎉 You're currently on a free trial!\n\nTrial ends in ${daysLeft} days.\n\nTo continue after the trial, you'll need to upgrade to Premium ($15/month).`
+            "🎉 You have an active Premium subscription!\n\nManage your subscription in the Stripe Customer Portal (in production)."
           );
         } else {
           alert(
-            "🎉 You have an active Premium subscription!\n\nManage your subscription in the Stripe Customer Portal (in production)."
+            "You don't have an active subscription.\n\nGet Premium to unlock all features!"
           );
         }
       } else {
         alert(
-          "You don't have an active subscription.\n\nStart your free trial to unlock premium features!"
+          "You don't have an active subscription.\n\nGet Premium to unlock all features!"
         );
       }
     } catch (error) {

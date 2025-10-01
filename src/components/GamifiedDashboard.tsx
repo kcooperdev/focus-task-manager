@@ -829,7 +829,7 @@ export const GamifiedDashboard: React.FC<DashboardProps> = ({ user }) => {
                   }}
                   className="px-4 py-2 bg-gradient-to-r from-amber-400 to-orange-500 text-white font-semibold rounded-lg hover:from-amber-500 hover:to-orange-600 transition-all duration-200"
                 >
-                  Upgrade Now
+                  Get Premium
                 </button>
               </div>
             </div>
@@ -845,11 +845,6 @@ export const GamifiedDashboard: React.FC<DashboardProps> = ({ user }) => {
                 <h3 className="text-lg font-semibold text-indigo-200">
                   Premium Analytics
                 </h3>
-                {isTrial && (
-                  <span className="px-2 py-1 bg-yellow-500/20 text-yellow-300 text-xs rounded-full">
-                    {trialDaysLeft} days left
-                  </span>
-                )}
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="bg-neutral-900/50 rounded-lg p-4">
@@ -1109,7 +1104,7 @@ export const GamifiedDashboard: React.FC<DashboardProps> = ({ user }) => {
                       }}
                       className="mt-3 w-full px-3 py-2 bg-gradient-to-r from-amber-400 to-orange-500 text-white font-semibold rounded-lg hover:from-amber-500 hover:to-orange-600 transition-all duration-200 text-sm"
                     >
-                      Upgrade to Unlock
+                      Get Premium to Unlock
                     </button>
                   </div>
                 )}

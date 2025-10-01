@@ -35,15 +35,15 @@ export const Paywall: React.FC<PaywallProps> = ({
     }
   };
 
-  const handleStartTrial = async () => {
+  const handleGetPremium = async () => {
     setLoading(true);
     try {
-      // For demo purposes, we'll simulate starting a trial
-      // In production, this would create a Stripe subscription with trial
-      await StripeService.createCheckoutSession("price_premium_trial", userId);
+      // For demo purposes, we'll simulate starting a premium subscription
+      // In production, this would create a Stripe subscription
+      await StripeService.createCheckoutSession("price_premium", userId);
       // Note: The page will reload after this, so we don't need to set loading to false
     } catch (error) {
-      console.error("Error starting trial:", error);
+      console.error("Error getting premium:", error);
       setLoading(false); // Only set loading to false if there's an error
     }
   };
@@ -106,25 +106,14 @@ export const Paywall: React.FC<PaywallProps> = ({
 
         <div className="space-y-3">
           <button
-            onClick={handleStartTrial}
+            onClick={handleGetPremium}
             disabled={loading}
             className="w-full bg-gradient-to-r from-yellow-400 to-orange-500 text-white font-semibold py-3 px-6 rounded-xl hover:from-yellow-500 hover:to-orange-600 transition-all duration-200 disabled:opacity-50 flex items-center justify-center gap-2"
           >
             {loading && (
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
             )}
-            {loading ? "Starting Trial..." : "Try Premium Free for 3 Days"}
-          </button>
-
-          <button
-            onClick={handleUpgrade}
-            disabled={loading}
-            className="w-full bg-gray-100 text-gray-700 font-semibold py-3 px-6 rounded-xl hover:bg-gray-200 transition-all duration-200 disabled:opacity-50 flex items-center justify-center gap-2"
-          >
-            {loading && (
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600"></div>
-            )}
-            {loading ? "Processing..." : "Upgrade to Premium - $15/month"}
+            {loading ? "Processing..." : "Get Premium - $15/month"}
           </button>
         </div>
 
