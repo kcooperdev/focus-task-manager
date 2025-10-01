@@ -8,6 +8,7 @@ import { GamifiedDashboard } from "./components/GamifiedDashboard";
 // SetupInstructions component not present; fall back to landing page when needed
 import { MagicLinkAuth } from "./components/MagicLinkAuth";
 import { PaymentPage } from "./components/PaymentPage";
+import { SubscriptionManagement } from "./components/SubscriptionManagement";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { SubscriptionProvider } from "./contexts/SubscriptionContext";
 import { supabase } from "./lib/supabase";
@@ -97,6 +98,7 @@ export function AppRouter() {
           <Route path="/" element={<App />} />
           <Route path="/auth" element={<MagicLinkAuth />} />
           <Route path="/payment" element={<PaymentPage />} />
+          <Route path="/subscription" element={<SubscriptionManagement />} />
           <Route
             path="/dashboard"
             element={

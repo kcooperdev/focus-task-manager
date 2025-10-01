@@ -45,28 +45,8 @@ export class StripeService {
 
   static async createCustomerPortalSession(userId: string) {
     try {
-      // For demo purposes, show a simple subscription management modal
-      const currentStatus = localStorage.getItem("subscription_status");
-
-      if (currentStatus) {
-        const data = JSON.parse(currentStatus);
-        const isTrial = data.isTrial;
-        const trialEndsAt = data.trialEndsAt;
-
-        if (data.isActive) {
-          alert(
-            "🎉 You have an active Premium subscription!\n\nManage your subscription in the Stripe Customer Portal (in production)."
-          );
-        } else {
-          alert(
-            "You don't have an active subscription.\n\nGet Premium to unlock all features!"
-          );
-        }
-      } else {
-        alert(
-          "You don't have an active subscription.\n\nGet Premium to unlock all features!"
-        );
-      }
+      // Redirect to subscription management page
+      window.location.href = "/subscription";
     } catch (error) {
       console.error("Error creating portal session:", error);
     }
